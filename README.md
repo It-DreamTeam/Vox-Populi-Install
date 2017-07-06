@@ -13,6 +13,6 @@ The environment contain two server.
 2. DataBase Server
   - MySQl Server
 
-## 99. Improvements
+## 2. Improvements
 
 1. The root account have not been disabled on the vagrant but in a real server the root will not be accessible
