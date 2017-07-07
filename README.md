@@ -17,7 +17,7 @@ The environment contain two server.
 
 1. The root account have not been disabled on the vagrant but in a real server the root will not be accessible
 
-## . Annexes
+## :maple_leaf: . Annexes
 
 Application GitHub Url:
 
