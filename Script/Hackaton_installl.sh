@@ -47,6 +47,4 @@ else
   # Lancement de deux vagrant (Web and DB)
   vagrant up
 
-  play end2.mp3
-
 fi
