@@ -83,6 +83,6 @@ elif [ "${1}" = "db" ];then
   bash -c "DEBIAN_FRONTEND='noninteractive' apt-get -y -q install mysql-server"
 
   # create database cook
-  mysql -uroot -p 0000 < "CREATE DATABASE cook;"
+  mysql -uroot -p 0000 -h 'db' < "CREATE DATABASE cook;"
 
 fi
