@@ -84,5 +84,4 @@ elif [ "${1}" = "db" ];then
 
   # create database cook
   mysql -uroot -p0000 < cook.sql
-
 fi
