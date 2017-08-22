@@ -34,8 +34,10 @@ else
   echo "  end" >> Vagrantfile
   echo "  config.vm.define \"db\" do |db|" >> Vagrantfile
   echo "    db.vm.box = \"ubuntu/xenial64\"" >> Vagrantfile
-  echo "    db.vm.network \"private_network\", ip: \"192.168.33.12\"" >> Vagrantfile
-  echo "    db.vm.provision \"shell\", path: \"https://raw.githubusercontent.com/It-DreamTeam/Vox-Populi/master/Script/serverInstall.sh\", :args => \"'db' '${SqlPassword}'\"" >> Vagrantfile
+  echo "    db.vm.network \"private_network\", ip: \"192.168.33.13\"" >> Vagrantfile
+  echo "    db.vm.synced_folder \"./data2\", \"/home/ubuntu\"" >> Vagrantfile
+  # echo "    db.vm.provision \"shell\", path: \"https://raw.githubusercontent.com/It-DreamTeam/Vox-Populi/master/Script/serverInstall.sh\", :args => \"'db' '${SqlPassword}'\"" >> Vagrantfile
+  echo "    db.vm.provision \"shell\", path: \"./serverInstall.sh\", :args => \"'db'\"" >> Vagrantfile
   echo "  end" >> Vagrantfile
   # echo "  config.vm.define \"nagios\" do |nagios|" >> Vagrantfile
   # echo "    db.vm.box = \"ubuntu/xenial64\"" >> Vagrantfile
@@ -46,7 +48,5 @@ else
 
   # Lancement de deux vagrant (Web and DB)
   vagrant up
-
-  play end2.mp3
 
 fi
