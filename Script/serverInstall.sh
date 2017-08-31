@@ -9,113 +9,141 @@
 #        Install Vox Populi Environment       #
 #---------------------------------------------#
 
-# Update repository
-apt-get update
-echo "ubuntu:azer" | sudo chpasswd
+commonInstall() {
+  echo "----------------------------------------------------"
+  echo "     Instruction Commune aux différentes Vagrant    "
+  echo "----------------------------------------------------"
+  # Update repository
+  apt-get update
+  # Change ubuntu Password
+  echo "ubuntu:azer" | sudo chpasswd
+  # Install Nmap
+  apt-get install -y nmap
 
-# Install common for Web and DB server
-apt-get install -y nmap
-echo ${1}
-if [ "${1}" = "web" ]; then
-  cd /var/www/html
-  # rootPasswd= ${1}
+  echo "this is ${1}"
+}
 
-  # Install Apache2 + Php7 + Php extension - libapache, mysql, intl, mbstring, xml
-  apt-get install -y apache2 php libapache2-mod-php php-mysql php-intl php-mbstring php-xml
-
-  # Install Unzip, Git, composer
-  apt-get install -y unzip git composer
-
-  # Install CakePhp
-  composer create-project --prefer-dist cakephp/app moodify
-  cd moodify
-  chmod +x ./bin/cake
-
-  # Paramatrage Firewall
+# Fonction: Firewall web
+firewallWebAPi() {
+  echo "--------------------------------------------"
+  echo "     Paramatrage et Activation Firewall     "
+  echo "--------------------------------------------"
   ufw allow 22
   ufw allow 80
   ufw allow 443
   ufw --force enable
+}
 
-  # Add Certificat SSL
-  openssl genrsa -out moodify.local.key 2048
-  openssl req -new -x509 -key moodify.local.key -out moodify.local.cert -days 3650 -subj /CN=moodify.local
-  mkdir /etc/apache2/sites-available/Ultimate
-  mv moodify.local.key /etc/apache2/sites-available/Ultimate/moodify.local.key
-  mv moodify.local.cert /etc/apache2/sites-available/Ultimate/moodify.local.cert
+# Fonction: Création des VirtualHost pour l'application Web
+virtualHostWebAngular() {
+    echo "----------------------------------------------"
+    echo "     Création du Virtual Host Moodify_Web     "
+    echo "----------------------------------------------"
+    echo "<VirtualHost *:80>" > /etc/apache2/sites-available/Moodify_Web.conf
+    echo "      ServerAdmin alban@fakeMail.com" >> /etc/apache2/sites-available/Moodify_Web.conf
+    echo "      DocumentRoot /var/www/html/moodify" >> /etc/apache2/sites-available/Moodify_Web.conf
+    echo "      ServerName www.moodify.com" >> /etc/apache2/sites-available/Moodify_Web.conf
+    echo "      ErrorLog ${APACHE_LOG_DIR}/error.log" >> /etc/apache2/sites-available/Moodify_Web.conf
+    echo "      CustomLog ${APACHE_LOG_DIR}/access.log combined" >> /etc/apache2/sites-available/Moodify_Web.conf
+    echo "      <Directory />" >> /etc/apache2/sites-available/Moodify_Web.conf
+    echo "        Options FollowSymLinks" >> /etc/apache2/sites-available/Moodify_Web.conf
+    echo "        AllowOverride All" >> /etc/apache2/sites-available/Moodify_Web.conf
+    echo "      </Directory>" >> /etc/apache2/sites-available/Moodify_Web.conf
+    echo "      <Directory /var/www>" >> /etc/apache2/sites-available/Moodify_Web.conf
+    echo "        Options Indexes FollowSymLinks MultiViews" >> /etc/apache2/sites-available/Moodify_Web.conf
+    echo "        AllowOverride All" >> /etc/apache2/sites-available/Moodify_Web.conf
+    echo "        Order Allow,Deny" >> /etc/apache2/sites-available/Moodify_Web.conf
+    echo "        Allow from all" >> /etc/apache2/sites-available/Moodify_Web.conf
+    echo "      </Directory>" >> /etc/apache2/sites-available/Moodify_Web.conf
+    echo "</VirtualHost>" >> /etc/apache2/sites-available/Moodify_Web.conf
+    a2ensite Moodify_Web.conf
+    a2dissite 000-default.conf
+}
 
+# Fonction: Création des VirtualHost pour l'api
+virtualHostApi() {
+  echo "----------------------------------------------"
+  echo "     Création du Virtual Host Moodify_Api     "
+  echo "----------------------------------------------"
+  echo "<VirtualHost *:80>" > /etc/apache2/sites-available/Moodify_Api.conf
+  echo "      ServerAdmin alban@fakeMail.com" >> /etc/apache2/sites-available/Moodify_Api.conf
+  echo "      DocumentRoot /var/www/html/api_moodify/webroot" >> /etc/apache2/sites-available/Moodify_Api.conf
+  echo "      ServerName moodify.local" >> /etc/apache2/sites-available/Moodify_Api.conf
+  echo "      Redirect permanent / https://moodify.local/" >> /etc/apache2/sites-available/Moodify_Api.conf
+  echo "      ErrorLog ${APACHE_LOG_DIR}/error.log" >> /etc/apache2/sites-available/Moodify_Api.conf
+  echo "      CustomLog ${APACHE_LOG_DIR}/access.log combined" >> /etc/apache2/sites-available/Moodify_Api.conf
+  echo "      <Directory />" >> /etc/apache2/sites-available/Moodify_Api.conf
+  echo "        Options FollowSymLinks" >> /etc/apache2/sites-available/Moodify_Api.conf
+  echo "        AllowOverride All" >> /etc/apache2/sites-available/Moodify_Api.conf
+  echo "      </Directory>" >> /etc/apache2/sites-available/Moodify_Api.conf
+  echo "      <Directory /var/www>" >> /etc/apache2/sites-available/Moodify_Api.conf
+  echo "        Options Indexes FollowSymLinks MultiViews" >> /etc/apache2/sites-available/Moodify_Api.conf
+  echo "        AllowOverride All" >> /etc/apache2/sites-available/Moodify_Api.conf
+  echo "        Order Allow,Deny" >> /etc/apache2/sites-available/Moodify_Api.conf
+  echo "        Allow from all" >> /etc/apache2/sites-available/Moodify_Api.conf
+  echo "      </Directory>" >> /etc/apache2/sites-available/Moodify_Api.conf
+  echo "</VirtualHost>" >> /etc/apache2/sites-available/Moodify_Api.conf
+  a2ensite Moodify_Api.conf
+  a2dissite 000-default.conf
+}
 
-  composer require google/apiclient
-  composer update
+##################################################
+####################   MAIN   ####################
+##################################################
+if [ "${1}" = "api" ]; then
+  # Instructions communes aux différentes vagrants
+  commonInstall
 
-  rm -r config src webroot README.md composer.json
-  git init
-  git remote add origin https://github.com/It-DreamTeam/Vox-Populi-Application.git
-  git pull origin master
-
+  cd /var/www/html
+  # Install Apache2 + Php7 + Php extension - libapache, mysql, intl, mbstring, xml
+  apt-get install -y apache2 php libapache2-mod-php php-mysql php-intl php-mbstring php-xml
+  # Install Unzip, Git, composer
+  apt-get install -y unzip git composer
   # Change User Apache user
   sed -i "s/www-data/ubuntu/g" /etc/apache2/envvars
-  # sed -i "s//www\/html\/moodify\/webroot/g" /etc/apache2/sites-available/000-default.conf
+  # Activation ApacheMod Rewrite
   a2enmod rewrite
-
-  # Gestion Vhost
-  echo "<VirtualHost *:80>" > /etc/apache2/sites-available/Ultimate.conf
-  echo "      ServerAdmin alban@fakeMail.com" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "      DocumentRoot /var/www/html/moodify/webroot" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "      ServerName moodify.local" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "      Redirect permanent / https://moodify.local/" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "      ErrorLog ${APACHE_LOG_DIR}/error.log" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "      CustomLog ${APACHE_LOG_DIR}/access.log combined" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "      <Directory />" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "        Options FollowSymLinks" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "        AllowOverride All" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "      </Directory>" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "      <Directory /var/www>" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "        Options Indexes FollowSymLinks MultiViews" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "        AllowOverride All" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "        Order Allow,Deny" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "        Allow from all" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "      </Directory>" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "</VirtualHost>" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "<VirtualHost *:443>" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "      ServerAdmin alban@fakeMail.com" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "      DocumentRoot /var/www/html/moodify/webroot" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "      ErrorLog ${APACHE_LOG_DIR}/error.log" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "      CustomLog ${APACHE_LOG_DIR}/access.log combined" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "      <Directory />" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "        Options FollowSymLinks" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "        AllowOverride All" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "      </Directory>" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "      <Directory /var/www>" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "        Options Indexes FollowSymLinks MultiViews" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "        AllowOverride All" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "        Order Allow,Deny" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "        Allow from all" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "      </Directory>" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "      # adding custom SSL cert" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "      SSLEngine on" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "      SSLCertificateFile /etc/apache2/sites-available/Ultimate/moodify.local.cert" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "      SSLCertificateKeyFile /etc/apache2/sites-available/Ultimate/moodify.local.key" >> /etc/apache2/sites-available/Ultimate.conf
-  echo "</VirtualHost>" >> /etc/apache2/sites-available/Ultimate.conf
-  a2ensite Ultimate.conf
-  a2dissite 000-default.conf
-  a2enmod ssl
-
+  # Paramatrage Firewall
+  firewallWebAPi
+  # Gestion VHost
+  virtualHostApi
+  # Récuperation Projet Api + Configuration
+  git clone https://github.com/dimsand/api_moodify.git
+  composer install
+  # Ajout du google api client
+  composer require google/apiclient
+  composer update
   # retart Apache2
   service apache2 restart
 
+### Entre ICI
+elif [ "${1}" = "web" ]; then
+  # Instructions communes aux différentes vagrants
+  commonInstall
+
+  cd /var/www/html/
+
+  # Installation Apache, npm et dépendances du projet + récupération de l'application
+  curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+  apt-get install -y apache2 nodejs build-essential
+  git clone https://github.com/ngie-mp/moodify.git && cd moodify
+  npm install
+
+  # Gestion VHost
+  virtualHostWebAngular
+  # retart Apache2
+  service apache2 restart
+
+  # Récup projet
+  # git clone https://github.com/ngie-mp/moodify.git
+  # mv moodify/* .
 
 
-  # Parameter webserver for cake PHP et récupération des fichiers
-  # cd moodify
-  # rm -r config
-  # rm -r src
-  # rm -r webroot
-  # git init
-  # git remote add origin https://github.com/It-DreamTeam/Vox-Populi-Application.git
-  # git pull origin master
 
+### ET ICI
 elif [ "${1}" = "db" ];then
+  # Instructions communes aux différentes vagrants
+  commonInstall
 
   # Paramatrage Firewall
   ufw allow 22
@@ -132,16 +160,10 @@ elif [ "${1}" = "db" ];then
   echo "UPDATE mysql.user SET Host = '%' WHERE user.Host = 'localhost' AND user.User = 'root';" | mysql -uroot -p0000
   sudo service mysql restart
 
-
   # create database cook
   mysql -uroot -p0000 < cook.sql
 
-# elif [ "${1}" = "nagios" ];then
-#   # Install Nagios 3
-#   export DEBIAN_FRONTEND="noninteractive"
-#
-#   sudo debconf-set-selections <<< "nagios3-cgi nagios3/adminpassword password 0000"
-#   sudo debconf-set-selections <<< "nagios3-cgi nagios3/adminpassword-repeat password 0000"
-#
-#   sudo apt-get install -y nagios3
+else
+    echo "ERROR: You Try to call an unknow server installation"
+    exit 1
 fi
