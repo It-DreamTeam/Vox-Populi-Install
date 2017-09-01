@@ -39,14 +39,7 @@ else
   rm -R apiData && mkdir apiData
 fi
 
-### Création du dossier nagiosData ###
-if [ ! -d "nagiosData" ]; then
-  mkdir nagiosData && cp nagiosautoinstall.sh nagiosData/nagiosautoinstall.sh
-else
-  rm -R nagiosData && mkdir nagiosData && cp nagiosautoinstall.sh nagiosData/nagiosautoinstall.sh
-fi
-
-vagrant box add nagios Nagios.box
+#vagrant box add nagios nagios3.box
 
 ### Création du Fichier Vagrantfile
 touch Vagrantfile
@@ -74,9 +67,9 @@ echo "    api.vm.provision \"shell\", path: \"https://raw.githubusercontent.com/
 # echo "    api.vm.provision \"shell\", path: \"./serverInstall.sh\", :args => \"'api'\"" >> Vagrantfile
 echo "  end" >> Vagrantfile
 echo "  config.vm.define \"nagios\" do |nagios|" >> Vagrantfile
-echo "    nagios.vm.box = \"nagios\"" >> Vagrantfile
+echo "    nagios.vm.box = \"ubuntu/xenial64\"" >> Vagrantfile
 echo "    nagios.vm.network \"private_network\", ip: \"192.168.33.13\"" >> Vagrantfile
-echo "    nagios.vm.synced_folder \"./nagiosData\", \"/home/ubuntu\"" >> Vagrantfile
+echo "    nagios.vm.provision \"shell\", path: \"./serverInstall.sh\", :args => \"'nagios'\"" >> Vagrantfile
 echo "  end" >> Vagrantfile
 echo "end" >> Vagrantfile
 

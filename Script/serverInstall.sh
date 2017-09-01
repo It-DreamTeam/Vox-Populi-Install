@@ -87,6 +87,27 @@ virtualHostApi() {
   a2dissite 000-default.conf
 }
 
+manageHostNagios(){
+  echo "define host{" >> /etc/nagios3/conf.d/localhost_nagios2.cfg
+  echo "use                     generic-host" >> /etc/nagios3/conf.d/localhost_nagios2.cfg
+  echo "host_name               web" >> /etc/nagios3/conf.d/localhost_nagios2.cfg
+  echo "alias                   web" >> /etc/nagios3/conf.d/localhost_nagios2.cfg
+  echo "address                 192.168.33.11" >> /etc/nagios3/conf.d/localhost_nagios2.cfg
+  echo "}" >> /etc/nagios3/conf.d/localhost_nagios2.cfg
+  echo "define host{" >> /etc/nagios3/conf.d/localhost_nagios2.cfg
+  echo "use                     generic-host" >> /etc/nagios3/conf.d/localhost_nagios2.cfg
+  echo "host_name               db" >> /etc/nagios3/conf.d/localhost_nagios2.cfg
+  echo "alias                   db" >> /etc/nagios3/conf.d/localhost_nagios2.cfg
+  echo "address                 192.168.33.12" >> /etc/nagios3/conf.d/localhost_nagios2.cfg
+  echo "}" >> /etc/nagios3/conf.d/localhost_nagios2.cfg
+  echo "define host{" >> /etc/nagios3/conf.d/localhost_nagios2.cfg
+  echo "use                     generic-host" >> /etc/nagios3/conf.d/localhost_nagios2.cfg
+  echo "host_name               api" >> /etc/nagios3/conf.d/localhost_nagios2.cfg
+  echo "alias                   api" >> /etc/nagios3/conf.d/localhost_nagios2.cfg
+  echo "address                 192.168.33.14" >> /etc/nagios3/conf.d/localhost_nagios2.cfg
+  echo "}" >> /etc/nagios3/conf.d/localhost_nagios2.cfg
+}
+
 ##################################################
 ####################   MAIN   ####################
 ##################################################
@@ -120,24 +141,18 @@ if [ "${1}" = "api" ]; then
 elif [ "${1}" = "web" ]; then
   # Instructions communes aux différentes vagrants
   commonInstall
-
+  # Paramatrage Firewall
+  firewallWebAPi
   cd /var/www/html/
-
   # Installation Apache, npm et dépendances du projet + récupération de l'application
   curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
   apt-get install -y apache2 nodejs build-essential
   git clone https://github.com/ngie-mp/moodify.git && cd moodify
   npm install
-
   # Gestion VHost
   virtualHostWebAngular
   # retart Apache2
   service apache2 restart
-
-  # Récup projet
-  # git clone https://github.com/ngie-mp/moodify.git
-  # mv moodify/* .
-
 
 
 ### ET ICI
@@ -163,6 +178,13 @@ elif [ "${1}" = "db" ];then
   # create database cook
   mysql -uroot -p0000 < cook.sql
 
+elif [ "${1}" = "nagios" ];then
+    commonInstall
+    debconf-set-selections <<< "nagios3-cgi nagios3/adminpassword password admin"
+    debconf-set-selections <<< "nagios3-cgi nagios3/adminpassword-repeat password admin"
+    DEBIAN_FRONTEND=noninteractive apt-get install -y nagios3
+    firewallWebAPi
+    manageHostNagios
 else
     echo "ERROR: You Try to call an unknow server installation"
     exit 1
